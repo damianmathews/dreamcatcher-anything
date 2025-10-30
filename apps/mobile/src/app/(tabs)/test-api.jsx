@@ -16,19 +16,25 @@ export default function TestAPIScreen() {
     setResults([]);
 
     try {
-      // Test 1: Simple fetch to backend
-      addResult('Testing connection to http://192.168.1.236:4000...');
-      const response1 = await fetch('http://192.168.1.236:4000/api/dreams/chat', {
+      // Test 1: Dream analysis endpoint
+      addResult('Testing connection to http://192.168.1.224:3000...');
+      const response1 = await fetch('http://192.168.1.224:3000/api/dreams/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [{ role: 'user', content: 'test' }] })
+        body: JSON.stringify({
+          dreamText: 'I was flying over a vast ocean, feeling free and peaceful. The sky was endless and blue.'
+        })
       });
       addResult(`Response status: ${response1.status}`);
 
       if (response1.ok) {
         const data1 = await response1.json();
-        addResult(`✅ SUCCESS: Got response with ${data1.tokensUsed} tokens`);
-        addResult(`Message: ${data1.message.substring(0, 50)}...`);
+        addResult(`✅ SUCCESS: Got analysis (Mock: ${data1.isMock})`);
+        addResult(`Summary: ${data1.analysis.summary.substring(0, 80)}...`);
+        addResult(`Themes: ${data1.analysis.themes.join(', ')}`);
+        if (data1.tokensUsed) {
+          addResult(`Tokens used: ${data1.tokensUsed}`);
+        }
       } else {
         const error1 = await response1.text();
         addResult(`❌ ERROR: ${error1}`);
@@ -36,6 +42,7 @@ export default function TestAPIScreen() {
     } catch (error) {
       addResult(`❌ CATCH ERROR: ${error.message}`);
       addResult(`Error type: ${error.constructor.name}`);
+      addResult(`This usually means the server is not reachable at the IP address.`);
     }
 
     setTesting(false);
