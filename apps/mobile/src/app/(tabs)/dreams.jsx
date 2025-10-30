@@ -8,8 +8,9 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Search, Filter, Play, Clock } from "lucide-react-native";
+import { Search, Filter, Play, Clock, Mountain, Sparkles, Moon } from "lucide-react-native";
 import { useRouter } from "expo-router";
+import GradientBackground from "@/components/GradientBackground";
 
 export default function DreamsScreen() {
   const insets = useSafeAreaInsets();
@@ -33,7 +34,7 @@ export default function DreamsScreen() {
         "I was soaring above snow-capped peaks with golden wings, feeling completely free...",
       hasAnalysis: true,
       hasVideo: true,
-      videoThumbnail: "🏔️",
+      IconComponent: Mountain,
     },
     {
       id: 2,
@@ -52,7 +53,7 @@ export default function DreamsScreen() {
         "Swimming through space where stars were like luminous fish around me...",
       hasAnalysis: true,
       hasVideo: true,
-      videoThumbnail: "🌌",
+      IconComponent: Sparkles,
     },
     {
       id: 4,
@@ -234,8 +235,8 @@ export default function DreamsScreen() {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fafafa" }}>
-      <StatusBar style="dark" />
+    <GradientBackground>
+      <StatusBar style="light" />
 
       {/* Header */}
       <View
@@ -243,16 +244,13 @@ export default function DreamsScreen() {
           paddingTop: insets.top + 24,
           paddingHorizontal: 24,
           paddingBottom: 24,
-          backgroundColor: "#ffffff",
-          borderBottomWidth: 1,
-          borderColor: "#f3f4f6",
         }}
       >
         <Text
           style={{
-            fontSize: 28,
+            fontSize: 32,
             fontWeight: "600",
-            color: "#1f2937",
+            color: "#ffffff",
             marginBottom: 8,
           }}
         >
@@ -261,7 +259,8 @@ export default function DreamsScreen() {
         <Text
           style={{
             fontSize: 16,
-            color: "#6b7280",
+            color: "#ffffff",
+            opacity: 0.9,
           }}
         >
           Your dream journal
@@ -272,18 +271,16 @@ export default function DreamsScreen() {
       <View style={{ paddingHorizontal: 24, paddingTop: 20 }}>
         <View
           style={{
-            backgroundColor: "#ffffff",
-            borderRadius: 12,
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
+            borderRadius: 16,
             flexDirection: "row",
             alignItems: "center",
             paddingHorizontal: 16,
-            borderWidth: 1,
-            borderColor: "#f3f4f6",
             shadowColor: "#000",
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 2,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.1,
+            shadowRadius: 12,
+            elevation: 4,
           }}
         >
           <Search color="#9ca3af" size={16} />
@@ -370,7 +367,7 @@ export default function DreamsScreen() {
               paddingHorizontal: 20,
             }}
           >
-            <Text style={{ fontSize: 48, marginBottom: 16 }}>🌙</Text>
+            <Moon color="#6b7280" size={48} style={{ marginBottom: 16 }} />
             <Text
               style={{
                 fontSize: 18,
@@ -395,6 +392,6 @@ export default function DreamsScreen() {
           </View>
         )}
       </ScrollView>
-    </View>
+    </GradientBackground>
   );
 }

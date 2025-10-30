@@ -62,10 +62,10 @@ const getApiUrl = () => {
   // Default to localhost for development
   // In production, you would set this via app.config.js or environment variables
   if (__DEV__) {
-    // For iOS simulator
-    return 'http://localhost:3000';
+    // For physical device, use your computer's IP
+    return 'http://192.168.1.236:3000';
+    // For iOS simulator use: 'http://localhost:3000'
     // For Android emulator, use: 'http://10.0.2.2:3000'
-    // For physical device, use your computer's IP: 'http://192.168.1.X:3000'
   }
 
   // Production API URL - should be set in app.config.js

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useCallback, memo } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,9 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -16,12 +19,137 @@ import {
   TrendingUp,
   Calendar,
   Sparkles,
+  BarChart3,
+  Target,
+  Moon,
+  Bird,
 } from "lucide-react-native";
+import GradientBackground from "@/components/GradientBackground";
+
+// Separate ChatView component to prevent re-renders
+const ChatView = memo(({ chatHistory, chatMessage, setChatMessage, handleSendMessage, insets, scrollViewRef }) => (
+  <KeyboardAvoidingView
+    style={{ flex: 1 }}
+    behavior={Platform.OS === "ios" ? "padding" : "height"}
+    keyboardVerticalOffset={90}
+  >
+    <ScrollView
+      ref={scrollViewRef}
+      style={{ flex: 1 }}
+      contentContainerStyle={{
+        paddingHorizontal: 24,
+        paddingTop: 16,
+        paddingBottom: 16,
+      }}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+    >
+      {chatHistory.map((message) => (
+        <View
+          key={message.id}
+          style={{
+            alignSelf: message.type === "user" ? "flex-end" : "flex-start",
+            backgroundColor: message.type === "user" ? "#000000" : "#ffffff",
+            borderRadius: 16,
+            padding: 16,
+            marginBottom: 12,
+            maxWidth: "85%",
+            borderWidth: message.type === "ai" ? 1 : 0,
+            borderColor: "#f3f4f6",
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: message.type === "ai" ? 0.05 : 0,
+            shadowRadius: 4,
+            elevation: message.type === "ai" ? 2 : 0,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 15,
+              color: message.type === "user" ? "#ffffff" : "#1f2937",
+              lineHeight: 20,
+              fontFamily: "Geist",
+            }}
+          >
+            {message.message}
+          </Text>
+          <Text
+            style={{
+              fontSize: 11,
+              color: message.type === "user" ? "#d1d5db" : "#9ca3af",
+              marginTop: 6,
+              fontFamily: "Geist",
+            }}
+          >
+            {message.timestamp}
+          </Text>
+        </View>
+      ))}
+    </ScrollView>
+
+    {/* Chat Input */}
+    <View
+      style={{
+        paddingHorizontal: 24,
+        paddingBottom: insets.bottom + 16,
+        paddingTop: 16,
+        backgroundColor: "#ffffff",
+        borderTopWidth: 1,
+        borderColor: "#f3f4f6",
+      }}
+    >
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "flex-end",
+          backgroundColor: "#f8fafc",
+          borderRadius: 24,
+          paddingHorizontal: 16,
+          paddingVertical: 8,
+          borderWidth: 1,
+          borderColor: "#f3f4f6",
+        }}
+      >
+        <TextInput
+          value={chatMessage}
+          onChangeText={setChatMessage}
+          placeholder="Ask about your dreams..."
+          placeholderTextColor="#9ca3af"
+          multiline={false}
+          onSubmitEditing={handleSendMessage}
+          returnKeyType="send"
+          blurOnSubmit={false}
+          style={{
+            flex: 1,
+            color: "#1f2937",
+            fontSize: 16,
+            paddingVertical: 8,
+          }}
+        />
+        <TouchableOpacity
+          onPress={handleSendMessage}
+          disabled={!chatMessage.trim()}
+          style={{
+            backgroundColor: chatMessage.trim() ? "#000000" : "#e5e7eb",
+            borderRadius: 20,
+            padding: 10,
+            marginLeft: 8,
+          }}
+        >
+          <Send color="#ffffff" size={16} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  </KeyboardAvoidingView>
+));
+
+ChatView.displayName = 'ChatView';
 
 export default function InsightsScreen() {
   const insets = useSafeAreaInsets();
   const [activeView, setActiveView] = useState("overview"); // 'overview' or 'chat'
   const [chatMessage, setChatMessage] = useState("");
+  const scrollViewRef = useRef(null);
   const [chatHistory, setChatHistory] = useState([
     {
       id: 1,
@@ -46,7 +174,7 @@ export default function InsightsScreen() {
       unit: "dreams/week",
       trend: "+12%",
       positive: true,
-      icon: "📊",
+      IconComponent: BarChart3,
     },
     {
       id: 2,
@@ -55,7 +183,7 @@ export default function InsightsScreen() {
       unit: "accuracy",
       trend: "+5%",
       positive: true,
-      icon: "🎯",
+      IconComponent: Target,
     },
     {
       id: 3,
@@ -64,7 +192,7 @@ export default function InsightsScreen() {
       unit: "6 dreams",
       trend: "Stable",
       positive: true,
-      icon: "🕊️",
+      IconComponent: Bird,
     },
     {
       id: 4,
@@ -73,7 +201,7 @@ export default function InsightsScreen() {
       unit: "/10",
       trend: "+0.3",
       positive: true,
-      icon: "😴",
+      IconComponent: Moon,
     },
   ];
 
@@ -104,26 +232,33 @@ export default function InsightsScreen() {
     },
   ];
 
-  const handleSendMessage = () => {
+  const handleSendMessage = useCallback(() => {
     if (!chatMessage.trim()) return;
 
+    const messageText = chatMessage.trim();
     const newMessage = {
-      id: chatHistory.length + 1,
+      id: Date.now(),
       type: "user",
-      message: chatMessage,
+      message: messageText,
       timestamp: new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
       }),
     };
 
-    setChatHistory([...chatHistory, newMessage]);
+    // Clear input first to prevent keyboard issues
     setChatMessage("");
+
+    // Dismiss keyboard
+    Keyboard.dismiss();
+
+    // Then add message
+    setChatHistory((prev) => [...prev, newMessage]);
 
     // Simulate AI response
     setTimeout(() => {
       const aiResponse = {
-        id: chatHistory.length + 2,
+        id: Date.now() + 1,
         type: "ai",
         message:
           "I understand you're curious about your dream patterns. Based on your recent dreams, I can provide personalized insights about your subconscious patterns and emotional state. What specific aspect would you like to explore?",
@@ -134,7 +269,7 @@ export default function InsightsScreen() {
       };
       setChatHistory((prev) => [...prev, aiResponse]);
     }, 1500);
-  };
+  }, [chatMessage]);
 
   const OverviewView = () => (
     <ScrollView
@@ -190,9 +325,7 @@ export default function InsightsScreen() {
                   marginBottom: 8,
                 }}
               >
-                <Text style={{ fontSize: 20, fontFamily: "Geist" }}>
-                  {insight.icon}
-                </Text>
+                <insight.IconComponent color="#6b7280" size={20} />
                 <View
                   style={{
                     backgroundColor: insight.positive ? "#f0fdf4" : "#fef2f2",
@@ -404,118 +537,9 @@ export default function InsightsScreen() {
     </ScrollView>
   );
 
-  const ChatView = () => (
-    <View style={{ flex: 1 }}>
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{
-          paddingHorizontal: 24,
-          paddingTop: 16,
-          paddingBottom: 16,
-        }}
-        showsVerticalScrollIndicator={false}
-      >
-        {chatHistory.map((message) => (
-          <View
-            key={message.id}
-            style={{
-              alignSelf: message.type === "user" ? "flex-end" : "flex-start",
-              backgroundColor: message.type === "user" ? "#000000" : "#ffffff",
-              borderRadius: 16,
-              padding: 16,
-              marginBottom: 12,
-              maxWidth: "85%",
-              borderWidth: message.type === "ai" ? 1 : 0,
-              borderColor: "#f3f4f6",
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: message.type === "ai" ? 0.05 : 0,
-              shadowRadius: 4,
-              elevation: message.type === "ai" ? 2 : 0,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 15,
-                color: message.type === "user" ? "#ffffff" : "#1f2937",
-                lineHeight: 20,
-                fontFamily: "Geist",
-              }}
-            >
-              {message.message}
-            </Text>
-            <Text
-              style={{
-                fontSize: 11,
-                color: message.type === "user" ? "#d1d5db" : "#9ca3af",
-                marginTop: 6,
-                fontFamily: "Geist",
-              }}
-            >
-              {message.timestamp}
-            </Text>
-          </View>
-        ))}
-      </ScrollView>
-
-      {/* Chat Input */}
-      <View
-        style={{
-          paddingHorizontal: 24,
-          paddingBottom: insets.bottom + 16,
-          paddingTop: 16,
-          backgroundColor: "#ffffff",
-          borderTopWidth: 1,
-          borderColor: "#f3f4f6",
-        }}
-      >
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "flex-end",
-            backgroundColor: "#f8fafc",
-            borderRadius: 24,
-            paddingHorizontal: 16,
-            paddingVertical: 8,
-            borderWidth: 1,
-            borderColor: "#f3f4f6",
-          }}
-        >
-          <TextInput
-            value={chatMessage}
-            onChangeText={setChatMessage}
-            placeholder="Ask about your dreams..."
-            placeholderTextColor="#9ca3af"
-            multiline
-            style={{
-              flex: 1,
-              color: "#1f2937",
-              fontSize: 16,
-              paddingVertical: 8,
-              maxHeight: 100,
-              fontFamily: "Geist",
-            }}
-          />
-          <TouchableOpacity
-            onPress={handleSendMessage}
-            disabled={!chatMessage.trim()}
-            style={{
-              backgroundColor: chatMessage.trim() ? "#000000" : "#e5e7eb",
-              borderRadius: 20,
-              padding: 10,
-              marginLeft: 8,
-            }}
-          >
-            <Send color="#ffffff" size={16} />
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
-
   return (
-    <View style={{ flex: 1, backgroundColor: "#fafafa" }}>
-      <StatusBar style="dark" />
+    <GradientBackground>
+      <StatusBar style="light" />
 
       {/* Header */}
       <View
@@ -523,9 +547,6 @@ export default function InsightsScreen() {
           paddingTop: insets.top + 24,
           paddingHorizontal: 24,
           paddingBottom: 16,
-          backgroundColor: "#ffffff",
-          borderBottomWidth: 1,
-          borderColor: "#f3f4f6",
         }}
       >
         <View
@@ -551,10 +572,9 @@ export default function InsightsScreen() {
           <View style={{ flex: 1 }}>
             <Text
               style={{
-                fontSize: 24,
+                fontSize: 32,
                 fontWeight: "600",
-                color: "#1f2937",
-                fontFamily: "Geist",
+                color: "#ffffff",
               }}
             >
               Insights
@@ -630,7 +650,18 @@ export default function InsightsScreen() {
       </View>
 
       {/* Content */}
-      {activeView === "overview" ? <OverviewView /> : <ChatView />}
-    </View>
+      {activeView === "overview" ? (
+        <OverviewView />
+      ) : (
+        <ChatView
+          chatHistory={chatHistory}
+          chatMessage={chatMessage}
+          setChatMessage={setChatMessage}
+          handleSendMessage={handleSendMessage}
+          insets={insets}
+          scrollViewRef={scrollViewRef}
+        />
+      )}
+    </GradientBackground>
   );
 }

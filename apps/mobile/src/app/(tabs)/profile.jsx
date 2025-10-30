@@ -20,9 +20,12 @@ import {
   Mail,
   Star,
   Zap,
+  Video,
+  Brain,
 } from "lucide-react-native";
 import { useAuth } from "@/utils/auth/useAuth";
 import useUser from "@/utils/auth/useUser";
+import GradientBackground from "@/components/GradientBackground";
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -255,7 +258,7 @@ export default function ProfileScreen() {
             elevation: 2,
           }}
         >
-          <Text style={{ fontSize: 20, fontFamily: "Geist" }}>🌙</Text>
+          <Moon color="#6b7280" size={20} />
           <Text
             style={{
               fontSize: 18,
@@ -295,7 +298,7 @@ export default function ProfileScreen() {
             elevation: 2,
           }}
         >
-          <Text style={{ fontSize: 20, fontFamily: "Geist" }}>🎬</Text>
+          <Video color="#6b7280" size={20} />
           <Text
             style={{
               fontSize: 18,
@@ -335,7 +338,7 @@ export default function ProfileScreen() {
             elevation: 2,
           }}
         >
-          <Text style={{ fontSize: 20, fontFamily: "Geist" }}>🧠</Text>
+          <Brain color="#6b7280" size={20} />
           <Text
             style={{
               fontSize: 18,
@@ -803,8 +806,8 @@ export default function ProfileScreen() {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fafafa" }}>
-      <StatusBar style="dark" />
+    <GradientBackground>
+      <StatusBar style="light" />
 
       {/* Header */}
       <View
@@ -812,9 +815,6 @@ export default function ProfileScreen() {
           paddingTop: insets.top + 24,
           paddingHorizontal: 24,
           paddingBottom: 16,
-          backgroundColor: "#ffffff",
-          borderBottomWidth: 1,
-          borderColor: "#f3f4f6",
         }}
       >
         <View
@@ -839,10 +839,9 @@ export default function ProfileScreen() {
 
           <Text
             style={{
-              fontSize: 24,
+              fontSize: 32,
               fontWeight: "600",
-              color: "#1f2937",
-              fontFamily: "Geist",
+              color: "#ffffff",
             }}
           >
             {activeView === "profile" && "Profile"}
@@ -856,6 +855,6 @@ export default function ProfileScreen() {
       {activeView === "profile" && <ProfileView />}
       {activeView === "subscription" && <SubscriptionView />}
       {activeView === "settings" && <SettingsView />}
-    </View>
+    </GradientBackground>
   );
 }
