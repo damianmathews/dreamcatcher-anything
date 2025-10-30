@@ -63,7 +63,7 @@ const getApiUrl = () => {
   // In production, you would set this via app.config.js or environment variables
   if (__DEV__) {
     // For physical device, use your computer's IP
-    return 'http://192.168.1.236:3000';
+    return 'http://192.168.1.224:3000';
     // For iOS simulator use: 'http://localhost:3000'
     // For Android emulator, use: 'http://10.0.2.2:3000'
   }

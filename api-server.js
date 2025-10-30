@@ -19,12 +19,14 @@ app.use(express.json());
 const MOCK_MODE = process.env.MOCK_MODE === 'true';
 const openai = MOCK_MODE ? null : new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+  timeout: 30000, // 30 second timeout
+  maxRetries: 2,
 });
 
 console.log(`\n🚀 Dream Analysis API Server`);
 console.log(`   Mode: ${MOCK_MODE ? 'MOCK (no API key needed)' : 'REAL OpenAI'}`);
 console.log(`   Port: ${PORT}`);
-console.log(`   Network: http://192.168.1.236:${PORT}\n`);
+console.log(`   Network: http://192.168.1.224:${PORT}\n`);
 
 // Mock response generator
 function getMockAnalysis(dreamText) {
@@ -135,9 +137,16 @@ app.post('/api/dreams/analyze', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error analyzing dream:', error);
+    console.error('Error details:', {
+      message: error.message,
+      status: error.status,
+      type: error.type,
+      code: error.code
+    });
     res.status(500).json({
       error: 'Failed to analyze dream',
-      details: error.message
+      details: error.message,
+      type: error.type || 'unknown'
     });
   }
 });
@@ -161,7 +170,7 @@ app.get('/health', (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running at:`);
   console.log(`   Local:   http://localhost:${PORT}`);
-  console.log(`   Network: http://192.168.1.236:${PORT}`);
+  console.log(`   Network: http://192.168.1.224:${PORT}`);
   console.log(`\nTest with:`);
   console.log(`   curl -X POST http://localhost:${PORT}/api/dreams/analyze -H "Content-Type: application/json" -d '{"dreamText":"I was flying over an ocean"}'`);
 });
