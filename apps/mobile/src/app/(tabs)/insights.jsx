@@ -232,7 +232,7 @@ export default function InsightsScreen() {
     },
   ];
 
-  const handleSendMessage = useCallback(() => {
+  const handleSendMessage = useCallback(async () => {
     if (!chatMessage.trim()) return;
 
     const messageText = chatMessage.trim();
@@ -252,24 +252,56 @@ export default function InsightsScreen() {
     // Dismiss keyboard
     Keyboard.dismiss();
 
-    // Then add message
+    // Add user message
     setChatHistory((prev) => [...prev, newMessage]);
 
-    // Simulate AI response
-    setTimeout(() => {
+    // Call real AI API
+    try {
+      // Build conversation history for API
+      const messages = [
+        ...chatHistory.map(msg => ({
+          role: msg.type === "user" ? "user" : "assistant",
+          content: msg.message
+        })),
+        { role: "user", content: messageText }
+      ];
+
+      const response = await fetch('http://192.168.1.224:3000/api/dreams/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
       const aiResponse = {
         id: Date.now() + 1,
         type: "ai",
-        message:
-          "I understand you're curious about your dream patterns. Based on your recent dreams, I can provide personalized insights about your subconscious patterns and emotional state. What specific aspect would you like to explore?",
+        message: data.message,
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
         }),
       };
       setChatHistory((prev) => [...prev, aiResponse]);
-    }, 1500);
-  }, [chatMessage]);
+    } catch (error) {
+      console.error('Chat error:', error);
+      const errorResponse = {
+        id: Date.now() + 1,
+        type: "ai",
+        message: "I'm having trouble connecting right now. Please check your connection and try again.",
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
+      setChatHistory((prev) => [...prev, errorResponse]);
+    }
+  }, [chatMessage, chatHistory]);
 
   const OverviewView = () => (
     <ScrollView

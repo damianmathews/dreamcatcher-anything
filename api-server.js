@@ -151,6 +151,58 @@ app.post('/api/dreams/analyze', async (req, res) => {
   }
 });
 
+// POST /api/dreams/chat - Chat endpoint for conversational AI
+app.post('/api/dreams/chat', async (req, res) => {
+  try {
+    const { messages } = req.body;
+
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({
+        error: 'messages array is required'
+      });
+    }
+
+    // Mock mode
+    if (MOCK_MODE) {
+      console.log('💬 Chat request (MOCK MODE)');
+      return res.json({
+        message: "I'm analyzing your dreams and understanding your patterns. Each dream you share helps me provide more personalized insights about your subconscious mind and emotional journey.",
+        isMock: true
+      });
+    }
+
+    // Real OpenAI mode
+    console.log('💬 Chat request with OpenAI:', messages[messages.length - 1].content.substring(0, 50) + '...');
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a dream interpretation assistant and therapist. Help users understand their dreams by providing insightful, empathetic responses about dream symbolism, patterns, and psychological meanings. Be warm, supportive, and conversational.'
+        },
+        ...messages
+      ],
+      temperature: 0.8,
+      max_tokens: 300,
+    });
+
+    res.json({
+      message: completion.choices[0].message.content,
+      tokensUsed: completion.usage.total_tokens,
+      model: completion.model,
+      isMock: false
+    });
+
+  } catch (error) {
+    console.error('❌ Error in chat:', error);
+    res.status(500).json({
+      error: 'Failed to process chat message',
+      details: error.message
+    });
+  }
+});
+
 // GET /api/dreams/analyze - Status check
 app.get('/api/dreams/analyze', (req, res) => {
   res.json({
